@@ -11,18 +11,21 @@ import (
 var tmp2 = template.Must(template.ParseFiles("templates/error.html"))
 
 func HomePage(w http.ResponseWriter, r *http.Request) {
+	// Check if the requested URL path starts with "/""
 	if r.URL.Path != "/" {
 		data := map[string]any{"code": http.StatusNotFound, "msg": "not found"}
 		w.WriteHeader(http.StatusNotFound)
 		tmp2.Execute(w, data)
 		return
 	}
+	// Handle non-GET methods
 	if r.Method != "GET" {
 		data := map[string]any{"code": http.StatusMethodNotAllowed, "msg": "method not allowed"}
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		tmp2.Execute(w, data)
 		return
 	}
+	// Parse the artist page
 	tmpl := template.Must(template.ParseFiles("templates/index.html"))
 
 	url := "https://groupietrackers.herokuapp.com/api/artists"
@@ -40,15 +43,12 @@ func HomePage(w http.ResponseWriter, r *http.Request) {
 }
 
 func SecondPage(w http.ResponseWriter, r *http.Request) {
-	// Check if the requested URL path starts with "/details/"
 	if !strings.HasPrefix(r.URL.Path, "/details/") {
 		data := map[string]any{"code": http.StatusNotFound, "msg": "not found"}
 		w.WriteHeader(http.StatusNotFound)
 		tmp2.Execute(w, data)
 		return
 	}
-
-	// Handle non-GET methods
 	if r.Method != "GET" {
 		data := map[string]any{"code": http.StatusMethodNotAllowed, "msg": "method not allowed"}
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -56,7 +56,6 @@ func SecondPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Parse the artist page
 	tmpl := template.Must(template.ParseFiles("templates/secondpage.html"))
 
 	// Check the path id
