@@ -13,7 +13,7 @@ var tmp2 = template.Must(template.ParseFiles("templates/error.html"))
 func HomePage(w http.ResponseWriter, r *http.Request) {
 	// Check if the requested URL path starts with "/""
 	if r.URL.Path != "/" {
-		data := map[string]any{"code": http.StatusNotFound, "msg": "not found"}
+		data := map[string]any{"code": http.StatusNotFound, "msg": "page not found"}
 		w.WriteHeader(http.StatusNotFound)
 		tmp2.Execute(w, data)
 		return
@@ -44,7 +44,7 @@ func HomePage(w http.ResponseWriter, r *http.Request) {
 
 func SecondPage(w http.ResponseWriter, r *http.Request) {
 	if !strings.HasPrefix(r.URL.Path, "/details/") {
-		data := map[string]any{"code": http.StatusNotFound, "msg": "not found"}
+		data := map[string]any{"code": http.StatusNotFound, "msg": "page not found"}
 		w.WriteHeader(http.StatusNotFound)
 		tmp2.Execute(w, data)
 		return
@@ -98,7 +98,7 @@ func SecondPage(w http.ResponseWriter, r *http.Request) {
 
 func LastPage(w http.ResponseWriter, r *http.Request) {
 	if !strings.HasPrefix(r.URL.Path, "/lastpage/") {
-		data := map[string]any{"code": http.StatusNotFound, "msg": "not found"}
+		data := map[string]any{"code": http.StatusNotFound, "msg": "page not found"}
 		w.WriteHeader(http.StatusNotFound)
 		tmp2.Execute(w, data)
 		return
