@@ -109,13 +109,7 @@ func LastPage(w http.ResponseWriter, r *http.Request) {
 		tmp2.Execute(w, data)
 		return
 	}
-	tmpl, err := template.ParseFiles("templates/thirdpage.html")
-	if err != nil {
-		fmt.Println("Error parsing template:", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
+	tmpl := template.Must(template.ParseFiles("templates/thirdpage.html"))
 	idStr := r.URL.Path[len("/lastpage/"):]
 	ids, _ := strconv.Atoi(idStr)
 	if ids <= 0 || ids > 52 {
