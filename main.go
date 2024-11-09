@@ -9,9 +9,10 @@ import (
 
 func main() {
 	http.HandleFunc("/", server.HomePage)
-	http.HandleFunc("/details/{id}", server.SecondPage)
-	http.HandleFunc("/lastpage/{id}", server.LastPage)
-	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
-	log.Println("Server running at http://localhost:8081")
-	http.ListenAndServe(":8081", nil)
+	http.HandleFunc("/details/", server.SecondPage)
+	http.HandleFunc("/lastpage/", server.LastPage)
+	// this will be applicated in the next project "bonus"
+	// http.Handle("/static/", http.FileServer(http.Dir("static")))
+	log.Println("Server running at http://localhost:8080")
+	http.ListenAndServe(":8080", nil)
 }

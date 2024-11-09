@@ -23,3 +23,15 @@ type Relations struct {
 	ID         int                 `json:"id"`
 	DATESLOCAT map[string][]string `json:"datesLocations"`
 }
+
+type SecondPageData struct {
+	ID        int
+	Artist    Artist
+	Locations []string
+}
+
+type ThirdPageData struct {
+	ID             int                 `json:"id"`
+	Dates          []string            `json:"dates"`
+	DatesLocations map[string][]string `json:"datesLocations"`
+}
