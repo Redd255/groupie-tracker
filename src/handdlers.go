@@ -1,10 +1,10 @@
 package server
 
 import (
-	"encoding/json"
 	"fmt"
 	"html/template"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -23,30 +23,13 @@ func HomePage(w http.ResponseWriter, r *http.Request) {
 		tmp2.Execute(w, data)
 		return
 	}
-	tmpl, err := template.ParseFiles("templates/index.html")
-	if err != nil {
-		data := map[string]any{"code": http.StatusInternalServerError, "msg": "error parsing file "}
-		w.WriteHeader(http.StatusInternalServerError)
-		tmp2.Execute(w, data)
-		return
-	}
+	tmpl := template.Must(template.ParseFiles("templates/index.html"))
 
-	data, err := http.Get("https://groupietrackers.herokuapp.com/api/artists")
-	if err != nil {
-		data := map[string]any{"code": http.StatusInternalServerError, "msg": "failed fetshing data"}
-		w.WriteHeader(http.StatusInternalServerError)
-		tmp2.Execute(w, data)
-		return
-	}
-	defer data.Body.Close()
+	url := "https://groupietrackers.herokuapp.com/api/artists"
+	data := Fetch(url, w)
 
 	var artists []Artist
-	if err := json.NewDecoder(data.Body).Decode(&artists); err != nil {
-		data := map[string]any{"code": http.StatusInternalServerError, "msg": "failed to proccess api data"}
-		w.WriteHeader(http.StatusInternalServerError)
-		tmp2.Execute(w, data)
-		return
-	}
+	DecodeByUs(data, &artists, w)
 
 	if err := tmpl.Execute(w, artists); err != nil {
 		data := map[string]any{"code": http.StatusInternalServerError, "msg": "failed executing"}
@@ -57,72 +40,48 @@ func HomePage(w http.ResponseWriter, r *http.Request) {
 }
 
 func SecondPage(w http.ResponseWriter, r *http.Request) {
+	// Check if the requested URL path starts with "/details/"
 	if !strings.HasPrefix(r.URL.Path, "/details/") {
 		data := map[string]any{"code": http.StatusNotFound, "msg": "not found"}
 		w.WriteHeader(http.StatusNotFound)
 		tmp2.Execute(w, data)
 		return
 	}
+
+	// Handle non-GET methods
 	if r.Method != "GET" {
 		data := map[string]any{"code": http.StatusMethodNotAllowed, "msg": "method not allowed"}
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		tmp2.Execute(w, data)
 		return
 	}
-	tmpl, err := template.ParseFiles("templates/secondpage.html")
-	if err != nil {
-		data := map[string]any{"code": http.StatusInternalServerError, "msg": "error parsing file "}
-		w.WriteHeader(http.StatusInternalServerError)
-		tmp2.Execute(w, data)
-		return
-	}
 
+	// Parse the artist page
+	tmpl := template.Must(template.ParseFiles("templates/secondpage.html"))
+
+	// Check the path id
 	idStr := r.URL.Path[len("/details/"):]
-
-	if idStr < "0" || idStr > "52" {
+	ids, _ := strconv.Atoi(idStr)
+	if ids <= 0 || ids > 52 {
 		data := map[string]any{"code": http.StatusNotFound, "msg": "page not found"}
 		w.WriteHeader(http.StatusNotFound)
 		tmp2.Execute(w, data)
 		return
 	}
 
+	// Fetch artist data from the API
 	url1 := "https://groupietrackers.herokuapp.com/api/artists/" + idStr
-	data1, err := http.Get(url1)
-	if err != nil {
-		data := map[string]any{"code": http.StatusInternalServerError, "msg": "failed fetshing data"}
-		w.WriteHeader(http.StatusInternalServerError)
-		tmp2.Execute(w, data)
-		return
-	}
-	defer data1.Body.Close()
+	data1 := Fetch(url1, w)
 
+	// Decode the JSON response into the artist struct.
 	var artist Artist
-	if err := json.NewDecoder(data1.Body).Decode(&artist); err != nil {
-		data := map[string]any{"code": http.StatusInternalServerError, "msg": "error decoding"}
-		w.WriteHeader(http.StatusInternalServerError)
-		tmp2.Execute(w, data)
-		return
-	}
+	DecodeByUs(data1, &artist, w)
 
 	url2 := "https://groupietrackers.herokuapp.com/api/locations/" + idStr
-	data2, err := http.Get(url2)
-	if err != nil {
-		data := map[string]any{"code": http.StatusInternalServerError, "msg": "error fetching locations"}
-		w.WriteHeader(http.StatusInternalServerError)
-		tmp2.Execute(w, data)
-		return
-	}
-	defer data2.Body.Close()
+	data2 := Fetch(url2, w)
 
 	var locationsResponse LocationsResponse
-	if err := json.NewDecoder(data2.Body).Decode(&locationsResponse); err != nil {
-		data := map[string]any{"code": http.StatusInternalServerError, "msg": "errorr decoding"}
-		w.WriteHeader(http.StatusInternalServerError)
-		tmp2.Execute(w, data)
-		return
-	}
-
-	locationsResponse.ID = artist.ID
+	DecodeByUs(data2, &locationsResponse, w)
 
 	pageData := SecondPageData{
 		ID:        locationsResponse.ID,
@@ -159,8 +118,8 @@ func LastPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	idStr := r.URL.Path[len("/lastpage/"):]
-
-	if idStr < "0" || idStr > "52" {
+	ids, _ := strconv.Atoi(idStr)
+	if ids <= 0 || ids > 52 {
 		data := map[string]any{"code": http.StatusNotFound, "msg": "page not found"}
 		w.WriteHeader(http.StatusNotFound)
 		tmp2.Execute(w, data)
@@ -168,36 +127,16 @@ func LastPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	url := "https://groupietrackers.herokuapp.com/api/relation/" + idStr
-	response, err := http.Get(url)
-	if err != nil {
-		fmt.Println("Error fetching relations data:", err)
-		http.Error(w, "Failed to fetch relations data", http.StatusInternalServerError)
-		return
-	}
-	defer response.Body.Close()
+	response := Fetch(url, w)
 
 	var relations Relations
-	if err := json.NewDecoder(response.Body).Decode(&relations); err != nil {
-		fmt.Println("Error decoding relations JSON:", err)
-		http.Error(w, "Failed to decode relations data", http.StatusInternalServerError)
-		return
-	}
+	DecodeByUs(response, &relations, w)
 
 	url2 := "https://groupietrackers.herokuapp.com/api/dates/" + idStr
-	response2, err := http.Get(url2)
-	if err != nil {
-		fmt.Println("Error fetching dates data:", err)
-		http.Error(w, "Failed to fetch dates data", http.StatusInternalServerError)
-		return
-	}
-	defer response2.Body.Close()
+	response2 := Fetch(url2, w)
 
 	var dates Dates
-	if err := json.NewDecoder(response2.Body).Decode(&dates); err != nil {
-		fmt.Println("Error decoding dates JSON:", err)
-		http.Error(w, "Failed to decode dates data", http.StatusInternalServerError)
-		return
-	}
+	DecodeByUs(response2, &dates, w)
 
 	pageData := ThirdPageData{
 		ID:             relations.ID,
