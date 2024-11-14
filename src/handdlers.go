@@ -27,10 +27,10 @@ func HomePage(w http.ResponseWriter, r *http.Request) {
 	}
 	// Parse the artist page
 	tmpl := template.Must(template.ParseFiles("templates/index.html"))
-
+	// Fetch the data from the API endpoint
 	url := "https://groupietrackers.herokuapp.com/api/artists"
 	data := Fetch(url, w)
-
+	// Decode the JSON response into the artist struct.
 	var artists []Artist
 	DecodeByUs(data, &artists, w)
 
@@ -68,11 +68,9 @@ func SecondPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Fetch artist data from the API
 	url1 := "https://groupietrackers.herokuapp.com/api/artists/" + idStr
 	data1 := Fetch(url1, w)
 
-	// Decode the JSON response into the artist struct.
 	var artist Artist
 	DecodeByUs(data1, &artist, w)
 
